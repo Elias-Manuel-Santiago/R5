@@ -5,11 +5,19 @@ type LoginFormProps = {
   onLogin: (identifier: string, password: string) => Promise<void>
   onShowRegister: () => void
   onShowPasswordRecovery: () => void
-  onLoginWithAuth0?: () => Promise<void>
-  onSignUpWithAuth0?: () => Promise<void>
+  onLoginWithGoogle?: () => Promise<void>
+  onLoginWithGitHub?: () => Promise<void>
+  onLoginWithApple?: () => Promise<void>
 }
 
-export function LoginForm({ onLogin, onShowRegister, onShowPasswordRecovery, onLoginWithAuth0, onSignUpWithAuth0 }: LoginFormProps) {
+export function LoginForm({
+  onLogin,
+  onShowRegister,
+  onShowPasswordRecovery,
+  onLoginWithGoogle,
+  onLoginWithGitHub,
+  onLoginWithApple,
+}: LoginFormProps) {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -57,17 +65,12 @@ export function LoginForm({ onLogin, onShowRegister, onShowPasswordRecovery, onL
       <button className="link-button" type="button" onClick={onShowPasswordRecovery}>
         Olvidé mi contraseña
       </button>
-      {onLoginWithAuth0 && (
+      {(onLoginWithGoogle || onLoginWithGitHub || onLoginWithApple) && (
         <>
           <p className="auth-divider">o</p>
-          <button type="button" onClick={() => void onLoginWithAuth0()}>
-            Continuar con Auth0
-          </button>
-          {onSignUpWithAuth0 && (
-            <button className="link-button" type="button" onClick={() => void onSignUpWithAuth0()}>
-              Crear cuenta con Auth0
-            </button>
-          )}
+          {onLoginWithGoogle && <button type="button" onClick={() => void onLoginWithGoogle()}>Continuar con Google</button>}
+          {onLoginWithGitHub && <button type="button" onClick={() => void onLoginWithGitHub()}>Continuar con GitHub</button>}
+          {onLoginWithApple && <button type="button" onClick={() => void onLoginWithApple()}>Continuar con Apple</button>}
         </>
       )}
     </form>

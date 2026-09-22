@@ -1,0 +1,64 @@
+/* Variables globales: el modo oscuro solo cambia estos valores. */
+:root {
+  --background: #f4e7c5;
+  --surface: #fff4d6;
+  --surface-muted: #ead9ad;
+  --text: #302a24;
+  --accent: #b84a39;
+  --accent-hover: #96392c;
+  --border: #302a24;
+  --shadow: #302a24;
+  --focus: #2468a2;
+  --success: #39704d;
+  --danger: #b84a39;
+  color: var(--text);
+  background: var(--background);
+  font-family: "Courier New", Courier, monospace;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+:root.dark {
+  --background: #171522;
+  --surface: #29243a;
+  --surface-muted: #39314c;
+  --text: #f8e7b7;
+  --accent: #ff785d;
+  --accent-hover: #ff9b85;
+  --border: #f8e7b7;
+  --shadow: #0b0910;
+  --focus: #9bcaff;
+  --success: #8fd0a5;
+  --danger: #ff785d;
+  color-scheme: dark;
+}
+
+:root:not(.dark) { color-scheme: light; }
+
+/* Base y fondo decorativo. */
+* { box-sizing: border-box; }
+
+body {
+  min-width: 320px;
+  min-height: 100svh;
+  margin: 0;
+  background-color: var(--background);
+  
+  background-size: 17px 17px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button,
+input { font: inherit; }
+
+button { -webkit-tap-highlight-color: transparent; }
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+::selection {
+  color: var(--surface);
+  background: var(--accent);
+}

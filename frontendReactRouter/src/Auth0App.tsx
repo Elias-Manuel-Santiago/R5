@@ -17,10 +17,15 @@ export function Auth0App() {
       auth0={{
         isAuthenticated,
         user,
-        login: () => loginWithRedirect({
+        loginWithGoogle: () => loginWithRedirect({
           authorizationParams: { connection: 'google-oauth2' },
         }),
-        signup: () => loginWithRedirect({ authorizationParams: { screen_hint: 'signup' } }),
+        loginWithGitHub: () => loginWithRedirect({
+          authorizationParams: { connection: 'github' },
+        }),
+        loginWithApple: () => loginWithRedirect({
+          authorizationParams: { connection: 'apple' },
+        }),
         logout: () => logout({ logoutParams: { returnTo: window.location.origin } }),
       }}
     />

@@ -29,8 +29,9 @@ type ResetPasswordRouteProps = {
 type Auth0Session = {
   isAuthenticated: boolean
   user: { name?: string; nickname?: string; email?: string; picture?: string } | undefined
-  login: () => Promise<void>
-  signup: () => Promise<void>
+  loginWithGoogle: () => Promise<void>
+  loginWithGitHub: () => Promise<void>
+  loginWithApple: () => Promise<void>
   logout: () => void
 }
 
@@ -117,8 +118,9 @@ function App({ auth0 }: AppProps) {
                 onLogin={handleLogin}
                 onShowRegister={() => navigate('/registro')}
                 onShowPasswordRecovery={() => navigate('/recuperar-contrasena')}
-                onLoginWithAuth0={auth0?.login}
-                onSignUpWithAuth0={auth0?.signup}
+                onLoginWithGoogle={auth0?.loginWithGoogle}
+                onLoginWithGitHub={auth0?.loginWithGitHub}
+                onLoginWithApple={auth0?.loginWithApple}
               />
             </section>
           )}
