@@ -23,10 +23,6 @@ export function EmailVerificationForm({ email, expiresAt, onVerify, onResend }: 
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    setSecondsLeft(secondsUntil(expiresAt))
-  }, [expiresAt])
-
-  useEffect(() => {
     const interval = window.setInterval(() => {
       setSecondsLeft(secondsUntil(expiresAt))
     }, 1000)

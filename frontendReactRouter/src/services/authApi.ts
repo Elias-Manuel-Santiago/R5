@@ -1,4 +1,4 @@
-import type { User } from '../types/user'
+import type { AdminUser, User } from '../types/user'
 
 const API_URL = 'http://localhost:3005/api'
 const SESSION_CHECK_TIMEOUT_MS = 5_000
@@ -83,4 +83,44 @@ export function resetPassword(token: string, password: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token, password }),
   })
+}
+
+export function updateUsername(username: string) {
+  return request<User>('/cuenta/username', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username }),
+  })
+}
+
+export function updateProfilePicture(profilePicture: string | null) {
+  return request<User>('/cuenta/foto', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profilePicture }),
+  })
+}
+
+export function changePassword(currentPassword: string, password: string) {
+  return request<void>('/cuenta/password', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ currentPassword, password }),
+  })
+}
+
+export function getAdminUsers(query = '') {
+  return request<AdminUser[]>(`/admin/usuarios?q=${encodeURIComponent(query)}`)
+}
+
+export function updateAdminUser(id: number, changes: { username?: string; profilePicture?: string | null }) {
+  return request<AdminUser>(`/admin/usuarios/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(changes),
+  })
+}
+
+export function deleteAdminUser(id: number) {
+  return request<void>(`/admin/usuarios/${id}`, { method: 'DELETE' })
 }

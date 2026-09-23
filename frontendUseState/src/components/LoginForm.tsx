@@ -1,17 +1,29 @@
 import { useState } from 'react'
+import { AuthAlternatives } from './AuthAlternatives'
 import { PasswordField } from './PasswordField'
 
 type LoginFormProps = {
   onLogin: (identifier: string, password: string) => Promise<void>
   onShowRegister: () => void
   onShowPasswordRecovery: () => void
+  onLoginWithGoogle?: () => Promise<void>
+  onLoginWithGitHub?: () => Promise<void>
+  onLoginWithApple?: () => Promise<void>
 }
 
-export function LoginForm({ onLogin, onShowRegister, onShowPasswordRecovery }: LoginFormProps) {
+export function LoginForm({
+  onLogin,
+  onShowRegister,
+  onShowPasswordRecovery,
+  onLoginWithGoogle,
+  onLoginWithGitHub,
+  onLoginWithApple,
+}: LoginFormProps) {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const hasAlternatives = Boolean(onLoginWithGoogle || onLoginWithGitHub || onLoginWithApple)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -34,27 +46,25 @@ export function LoginForm({ onLogin, onShowRegister, onShowPasswordRecovery }: L
   }
 
   return (
-    <form className="form" onSubmit={handleSubmit} noValidate>
-      <h1>Iniciar sesión</h1>
-      <label className="field">
-        Usuario o email
-        <input
-          value={identifier}
-          onChange={(event) => setIdentifier(event.target.value)}
-        />
-      </label>
-      <PasswordField label="Contraseña" value={password} onChange={setPassword} autoComplete="current-password" />
-      {error && <p className="error">{error}</p>}
-      <button disabled={isLoading}>{isLoading ? 'Ingresando...' : 'Ingresar'}</button>
-      <p>
-        ¿No tienes cuenta?{' '}
-        <button className="link-button" type="button" onClick={onShowRegister}>
-          Regístrate
-        </button>
-      </p>
-      <button className="link-button" type="button" onClick={onShowPasswordRecovery}>
-        Olvidé mi contraseña
-      </button>
+    <form className={`auth-form${hasAlternatives ? ' auth-form--with-alternatives' : ''}`} onSubmit={handleSubmit} noValidate>
+      <div className="auth-form__main">
+        <h1>Iniciar sesión</h1>
+        <label className="field">
+          Usuario o email
+          <input value={identifier} onChange={(event) => setIdentifier(event.target.value)} />
+        </label>
+        <PasswordField label="Contraseña" value={password} onChange={setPassword} autoComplete="current-password" />
+        {error && <p className="error">{error}</p>}
+        <button disabled={isLoading}>{isLoading ? 'Ingresando...' : 'Ingresar'}</button>
+        <p>¿No tienes cuenta? <button className="link-button" type="button" onClick={onShowRegister}>Regístrate</button></p>
+        <button className="link-button" type="button" onClick={onShowPasswordRecovery}>Olvidé mi contraseña</button>
+      </div>
+      <AuthAlternatives
+        mode="login"
+        onLoginWithGoogle={onLoginWithGoogle}
+        onLoginWithGitHub={onLoginWithGitHub}
+        onLoginWithApple={onLoginWithApple}
+      />
     </form>
   )
 }

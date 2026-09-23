@@ -20,7 +20,13 @@ export function AppRoot() {
     <Auth0Provider
       domain={domain}
       clientId={clientId}
-      authorizationParams={{ redirect_uri: window.location.origin }}
+      cacheLocation="localstorage"
+      useRefreshTokens
+      useRefreshTokensFallback
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+        scope: 'openid profile email',
+      }}
     >
       <BrowserRouter>
         <Auth0App />

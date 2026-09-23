@@ -1,13 +1,14 @@
 import express from "express";
 import {
-  obtenerPersonas,
+  obtenerPersonasParaAdmin,
   obtenerPersonaPorId,
   obtenerPersonaPorEmail,
   obtenerPersonaPorUsername,
   login,
   crearPersona,
   actualizarUsername,
-  actualizarPassword,
+  actualizarPasswordConActual,
+  actualizarFotoPerfil,
   eliminarPersona,
 } from "./modules/consultas.js";
 import {
@@ -17,6 +18,7 @@ import {
   obtenerUsuarioPorSesion,
   opcionesCookieSesion,
   revocarSesion,
+  revocarOtrasSesionesDeUsuario,
 } from "./modules/sesiones.js";
 import { enviarCodigoVerificacion, enviarEnlaceRecuperacion } from "./modules/correo.js";
 import { crearCodigoVerificacion, verificarCodigoVerificacion } from "./modules/verificacionEmail.js";
@@ -26,10 +28,25 @@ const app = express();
 const port = 3005;
 
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  const origin = req.get("origin");
+  const frontendOrigin = process.env.FRONTEND_URL ?? "http://localhost:5173";
+  // Vite puede elegir 5174, 5175, etc. si el puerto por defecto está ocupado.
+  // Solo se permiten esos orígenes locales durante desarrollo; producción exige
+  // el origen exacto definido en FRONTEND_URL.
+  const esOrigenLocalDeDesarrollo = process.env.NODE_ENV !== "production"
+    && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin ?? "");
+
+  if (origin && origin !== frontendOrigin && !esOrigenLocalDeDesarrollo) {
+    return res.status(403).json({ error: "Origen no permitido" });
+  }
+
+  if (origin) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Vary", "Origin");
+  }
   res.header("Access-Control-Allow-Credentials", "true");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });
@@ -84,8 +101,13 @@ function validarEmail(req, res, next) {
 }
 
 function usuarioPublico(usuario) {
-  const { password, password_hash, ...datos } = usuario;
-  return datos;
+  // El id es un dato interno: únicamente se incluye en las respuestas del panel admin.
+  const { id, password, password_hash, is_admin, ...datos } = usuario;
+  return { ...datos, role: is_admin ? "admin" : "user" };
+}
+
+function usuarioAdmin(usuario) {
+  return { id: usuario.id, ...usuarioPublico(usuario) };
 }
 
 // Resuelve la cookie en cada ruta protegida y deja el usuario disponible en req.usuario.
@@ -98,17 +120,34 @@ async function requerirSesion(req, res, next) {
   next();
 }
 
-function requerirMismoUsuario(req, res, next) {
-  if (Number(req.params.id) !== req.usuario.id) {
-    return res.status(403).json({ error: "No tienes permiso para modificar este usuario" });
-  }
-  next();
-}
-
 function requerirEmailVerificado(req, res, next) {
   if (!req.usuario.email_verified_at) {
     return res.status(403).json({ error: "Debes verificar tu correo para acceder" });
   }
+  next();
+}
+
+function requerirAdmin(req, res, next) {
+  if (!req.usuario.is_admin) {
+    return res.status(403).json({ error: "Necesitas permisos de administrador" });
+  }
+  next();
+}
+
+function errorFotoPerfil(foto) {
+  if (foto === null) return null;
+  const coincide = typeof foto === "string"
+    && /^data:image\/(png|jpe?g|webp|gif);base64,[a-zA-Z0-9+/]+={0,2}$/.test(foto);
+  // 2 MB ya codificados en base64 (aprox. 1.5 MB del archivo original).
+  if (!coincide || foto.length > 2 * 1024 * 1024) {
+    return "La foto debe ser una imagen PNG, JPG, WEBP o GIF de hasta 1.5 MB";
+  }
+  return null;
+}
+
+function validarFotoPerfil(req, res, next) {
+  const error = errorFotoPerfil(req.body?.profilePicture);
+  if (error) return res.status(400).json({ error });
   next();
 }
 
@@ -182,15 +221,6 @@ app.post("/api/verificacion-email/confirmar", requerirSesion, validarCampos("cod
   res.json({ ...usuarioPublico(req.usuario), email_verified_at: new Date().toISOString() });
 });
 
-app.get("/api/personas", requerirSesion, requerirEmailVerificado, async (req, res) => {
-  const usuarios = await obtenerPersonas();
-  res.json(usuarios.map(usuarioPublico));
-});
-
-app.get("/api/personas/:id", requerirSesion, requerirEmailVerificado, requerirMismoUsuario, (req, res) => {
-  res.json(usuarioPublico(req.usuario));
-});
-
 app.post("/api/login", validarCampos("identifier", "password"), async (req, res) => {
   const resultado = await login(req.body.identifier, req.body.password);
   if (!resultado.success) return res.status(401).json(resultado);
@@ -203,45 +233,88 @@ app.post("/api/login", validarCampos("identifier", "password"), async (req, res)
   const verificationExpiresAt = resultado.usuario.email_verified_at
     ? null
     : await enviarNuevoCodigo(resultado.usuario);
-  res.json({ success: true, usuario: resultado.usuario, verificationExpiresAt });
+  res.json({ success: true, usuario: usuarioPublico(resultado.usuario), verificationExpiresAt });
 });
 
 app.post("/api/personas", validarCampos("username", "email", "password"), validarUsername, validarEmail, validarPasswordSegura, async (req, res) => {
   const { username, email, password } = req.body;
   const resultado = await crearPersona({ username, email, password });
   if (resultado?.success === false) return res.status(409).json(resultado);
-  const usuario = { id: resultado, username, email, email_verified_at: null };
+  const usuario = { id: resultado, username, email, email_verified_at: null, profile_picture: null, is_admin: 0 };
   const token = await crearSesion(usuario.id, {
     userAgent: req.get("user-agent"),
     ipAddress: req.ip,
   });
   res.cookie(NOMBRE_COOKIE_SESION, token, opcionesCookieSesion());
   const verificationExpiresAt = await enviarNuevoCodigo(usuario);
-  res.status(201).json({ usuario, verificationExpiresAt });
+  res.status(201).json({ usuario: usuarioPublico(usuario), verificationExpiresAt });
 });
 
-app.put("/api/personas/:id/username", requerirSesion, requerirEmailVerificado, requerirMismoUsuario, validarCampos("username"), validarUsername, async (req, res) => {
-  const { id } = req.params;
+app.put("/api/cuenta/username", requerirSesion, requerirEmailVerificado, validarCampos("username"), validarUsername, async (req, res) => {
+  const id = req.usuario.id;
   const { username } = req.body;
   const usuario = await obtenerPersonaPorId(id);
   if (!usuario) return res.status(404).json({ error: "Usuario no encontrado" });
   const existente = await obtenerPersonaPorUsername(username);
-  if (existente && String(existente.id) !== id) {
+  if (existente && existente.id !== id) {
     return res.status(409).json({ error: "Username ya en uso" });
   }
   await actualizarUsername(id, { username });
-  res.json({ id: Number(id), username });
+  res.json(usuarioPublico({ ...usuario, username }));
 });
 
-app.put("/api/personas/:id/password", requerirSesion, requerirEmailVerificado, requerirMismoUsuario, validarCampos("password"), validarPasswordSegura, async (req, res) => {
-  const { id } = req.params;
-  const usuario = await obtenerPersonaPorId(id);
-  if (!usuario) return res.status(404).json({ error: "Usuario no encontrado" });
-  await actualizarPassword(id, { password: req.body.password });
+app.put("/api/cuenta/password", requerirSesion, requerirEmailVerificado, validarCampos("currentPassword", "password"), validarPasswordSegura, async (req, res) => {
+  const actualizada = await actualizarPasswordConActual(req.usuario.id, req.body.currentPassword, req.body.password);
+  if (!actualizada) return res.status(400).json({ error: "La contraseña actual no es correcta" });
+
+  const token = leerCookie(req.headers.cookie, NOMBRE_COOKIE_SESION);
+  await revocarOtrasSesionesDeUsuario(req.usuario.id, token);
   res.sendStatus(204);
 });
 
-app.delete("/api/personas/:id", requerirSesion, requerirEmailVerificado, requerirMismoUsuario, async (req, res) => {
+app.put("/api/cuenta/foto", requerirSesion, requerirEmailVerificado, validarFotoPerfil, async (req, res) => {
+  await actualizarFotoPerfil(req.usuario.id, req.body.profilePicture);
+  res.json(usuarioPublico({ ...req.usuario, profile_picture: req.body.profilePicture }));
+});
+
+app.get("/api/admin/usuarios", requerirSesion, requerirEmailVerificado, requerirAdmin, async (req, res) => {
+  const busqueda = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  if (busqueda.length > 100) return res.status(400).json({ error: "La búsqueda no puede superar 100 caracteres" });
+  const usuarios = await obtenerPersonasParaAdmin(busqueda);
+  res.json(usuarios.map(usuarioAdmin));
+});
+
+app.patch("/api/admin/usuarios/:id", requerirSesion, requerirEmailVerificado, requerirAdmin, async (req, res) => {
+  const { id } = req.params;
+  const tieneUsername = Object.hasOwn(req.body ?? {}, "username");
+  const tieneFoto = Object.hasOwn(req.body ?? {}, "profilePicture");
+  if (!tieneUsername && !tieneFoto) return res.status(400).json({ error: "Indica un nombre de usuario o una foto" });
+
+  if (tieneUsername) {
+    const username = req.body?.username?.trim();
+    if (!/^[a-zA-Z0-9_]{3,100}$/.test(username ?? "")) {
+      return res.status(400).json({ error: "El usuario debe tener entre 3 y 100 caracteres: letras, números o guion bajo" });
+    }
+    req.body.username = username;
+    const existente = await obtenerPersonaPorUsername(req.body.username);
+    if (existente && String(existente.id) !== id) return res.status(409).json({ error: "Username ya en uso" });
+    await actualizarUsername(id, { username: req.body.username });
+  }
+  if (tieneFoto) {
+    const errorFoto = errorFotoPerfil(req.body.profilePicture);
+    if (errorFoto) return res.status(400).json({ error: errorFoto });
+    await actualizarFotoPerfil(id, req.body.profilePicture);
+  }
+
+  const usuario = await obtenerPersonaPorId(id);
+  if (!usuario) return res.status(404).json({ error: "Usuario no encontrado" });
+  res.json(usuarioAdmin(usuario));
+});
+
+app.delete("/api/admin/usuarios/:id", requerirSesion, requerirEmailVerificado, requerirAdmin, async (req, res) => {
+  if (Number(req.params.id) === req.usuario.id) {
+    return res.status(400).json({ error: "No puedes eliminar tu propia cuenta desde el panel administrador" });
+  }
   const filasAfectadas = await eliminarPersona(req.params.id);
   if (filasAfectadas === 0) return res.status(404).json({ error: "Usuario no encontrado" });
   res.sendStatus(204);

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AuthAlternatives } from './AuthAlternatives'
 import { PasswordField } from './PasswordField'
 
 type LoginFormProps = {
@@ -22,6 +23,7 @@ export function LoginForm({
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const hasAlternatives = Boolean(onLoginWithGoogle || onLoginWithGitHub || onLoginWithApple)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,35 +46,35 @@ export function LoginForm({
   }
 
   return (
-    <form className="form" onSubmit={handleSubmit} noValidate>
-      <h1>Iniciar sesión</h1>
-      <label className="field">
-        Usuario o email
-        <input
-          value={identifier}
-          onChange={(event) => setIdentifier(event.target.value)}
-        />
-      </label>
-      <PasswordField label="Contraseña" value={password} onChange={setPassword} autoComplete="current-password" />
-      {error && <p className="error">{error}</p>}
-      <button disabled={isLoading}>{isLoading ? 'Ingresando...' : 'Ingresar'}</button>
-      <p>
-        ¿No tienes cuenta?{' '}
-        <button className="link-button" type="button" onClick={onShowRegister}>
-          Regístrate
+    <form className={`auth-form${hasAlternatives ? ' auth-form--with-alternatives' : ''}`} onSubmit={handleSubmit} noValidate>
+      <div className="auth-form__main">
+        <h1>Iniciar sesión</h1>
+        <label className="field">
+          Usuario o email
+          <input
+            value={identifier}
+            onChange={(event) => setIdentifier(event.target.value)}
+          />
+        </label>
+        <PasswordField label="Contraseña" value={password} onChange={setPassword} autoComplete="current-password" />
+        {error && <p className="error">{error}</p>}
+        <button disabled={isLoading}>{isLoading ? 'Ingresando...' : 'Ingresar'}</button>
+        <p>
+          ¿No tienes cuenta?{' '}
+          <button className="link-button" type="button" onClick={onShowRegister}>
+            Regístrate
+          </button>
+        </p>
+        <button className="link-button" type="button" onClick={onShowPasswordRecovery}>
+          Olvidé mi contraseña
         </button>
-      </p>
-      <button className="link-button" type="button" onClick={onShowPasswordRecovery}>
-        Olvidé mi contraseña
-      </button>
-      {(onLoginWithGoogle || onLoginWithGitHub || onLoginWithApple) && (
-        <>
-          <p className="auth-divider">o</p>
-          {onLoginWithGoogle && <button type="button" onClick={() => void onLoginWithGoogle()}>Continuar con Google</button>}
-          {onLoginWithGitHub && <button type="button" onClick={() => void onLoginWithGitHub()}>Continuar con GitHub</button>}
-          {onLoginWithApple && <button type="button" onClick={() => void onLoginWithApple()}>Continuar con Apple</button>}
-        </>
-      )}
+      </div>
+      <AuthAlternatives
+        mode="login"
+        onLoginWithGoogle={onLoginWithGoogle}
+        onLoginWithGitHub={onLoginWithGitHub}
+        onLoginWithApple={onLoginWithApple}
+      />
     </form>
   )
 }

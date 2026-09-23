@@ -3,7 +3,7 @@
   display: grid;
   min-height: 100svh;
   place-items: center;
-  padding: 2rem 1.25rem;
+  padding: 2rem clamp(1.25rem, 4vw, 5rem);
 }
 
 .auth-box,
@@ -17,9 +17,12 @@
   box-shadow: 9px 9px 0 var(--shadow);
 }
 
+.auth-box--with-alternatives { width: min(100%, 62rem); }
+
 .auth-box h1,
 .auth-box h2,
-.user-card h1 {
+.user-card h1,
+.admin-panel h1 {
   margin: 0;
   letter-spacing: -0.05em;
   line-height: 1.05;
@@ -29,11 +32,161 @@
 .user-card h1 { font-size: clamp(1.8rem, 6vw, 2.5rem); }
 .auth-box h2 { font-size: 1.55rem; }
 
+.account-card {
+  width: min(100%, 76rem);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem 2rem;
+}
+.account-card > h1,
+.account-card > .profile-summary,
+.account-card > .message,
+.account-card > .error,
+.settings-form--password,
+.account-actions { grid-column: 1 / -1; }
+.profile-summary,
+.admin-user__summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.profile-summary p,
+.admin-user__summary p { margin: 0.25rem 0; }
+.profile-picture {
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: 0 0 4.5rem;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  object-fit: cover;
+}
+.profile-picture--placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--surface);
+  background: var(--accent);
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+.settings-form {
+  padding-top: 1rem;
+  border-top: 2px solid var(--border);
+}
+.settings-form h2 { margin: 0; font-size: 1.15rem; }
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 0.25rem;
+}
+.account-actions button { width: auto; }
+.secondary-button { color: var(--text); background: var(--surface-muted); }
+.secondary-button:hover:not(:disabled) { background: var(--surface); }
+.danger-button { background: var(--danger); }
+
+.admin-panel {
+  width: min(100%, 90rem);
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  border: 3px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 9px 9px 0 var(--shadow);
+}
+.admin-panel__header,
+.admin-search {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.admin-panel__header p { margin-bottom: 0; }
+.admin-search { margin: 1.5rem 0; }
+.admin-search .field { flex: 1; }
+.admin-users { display: grid; gap: 1rem; }
+.admin-user {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1.15fr) minmax(16rem, 1fr) minmax(9rem, auto);
+  align-items: end;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid var(--border);
+  background: var(--surface-muted);
+}
+.admin-user .danger-button { grid-column: 3; }
+
+.dialog-backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgb(0 0 0 / 55%);
+}
+.dialog {
+  width: min(100%, 34rem);
+  padding: clamp(1.5rem, 5vw, 2.25rem);
+  border: 3px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 9px 9px 0 var(--shadow);
+}
+.dialog h2 { margin-top: 0; font-size: 1.5rem; }
+.dialog__actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
+
 /* Formularios y campos. */
 .form {
   display: grid;
   gap: 1rem;
 }
+
+.auth-form--with-alternatives {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.8fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: stretch;
+}
+
+.auth-form__main {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+
+.auth-form__main > p { margin: 0; }
+
+.auth-alternatives {
+  display: grid;
+  align-content: center;
+  gap: 1.25rem;
+  padding-left: clamp(1.5rem, 4vw, 3.5rem);
+  border-left: 2px solid var(--border);
+}
+
+.auth-alternatives__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.auth-alternatives__heading span {
+  height: 2px;
+  flex: 1;
+  background: var(--border);
+}
+
+.auth-alternatives__heading p {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.auth-alternatives__options { display: grid; gap: 0.75rem; }
 
 .field {
   display: grid;
@@ -126,6 +279,28 @@ button:disabled { cursor: not-allowed; opacity: 0.6; }
   transform: none;
 }
 
+.social-login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  color: var(--text);
+  background: var(--surface-muted);
+}
+
+.social-login-button:hover:not(:disabled) { background: var(--surface); }
+
+.social-login-button__logo {
+  width: 1.3rem;
+  height: 1.3rem;
+  object-fit: contain;
+}
+
+.social-login-button__logo--dark { display: none; }
+
+:root.dark .social-login-button__logo--light { display: none; }
+:root.dark .social-login-button__logo--dark { display: block; }
+
 .error,
 .message {
   margin: 0;
@@ -161,4 +336,29 @@ button:disabled { cursor: not-allowed; opacity: 0.6; }
   .auth-box,
   .user-card { padding: 1.35rem; box-shadow: 6px 6px 0 var(--shadow); }
   .theme-button { right: 0.9rem; bottom: 0.9rem; }
+}
+
+@media (max-width: 700px) {
+  .auth-box--with-alternatives { width: min(100%, 27rem); }
+  .auth-form--with-alternatives { grid-template-columns: 1fr; }
+  .auth-alternatives {
+    padding: 1.5rem 0 0;
+    border-top: 2px solid var(--border);
+    border-left: 0;
+  }
+  .account-card { grid-template-columns: 1fr; }
+  .account-card > h1,
+  .account-card > .profile-summary,
+  .account-card > .message,
+  .account-card > .error,
+  .settings-form--password,
+  .account-actions { grid-column: auto; }
+  .account-actions { justify-content: stretch; }
+  .account-actions button { width: 100%; }
+  .dialog__actions { flex-direction: column-reverse; }
+  .dialog__actions button { width: 100%; }
+  .admin-panel__header,
+  .admin-search { align-items: stretch; flex-direction: column; }
+  .admin-user { grid-template-columns: 1fr; }
+  .admin-user .danger-button { grid-column: auto; }
 }

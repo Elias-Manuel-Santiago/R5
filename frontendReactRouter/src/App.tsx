@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import type { User as Auth0User } from '@auth0/auth0-react'
 import { Navigate, Route, Routes, useNavigate, useSearchParams } from 'react-router-dom'
 import { EmailVerificationForm } from './components/EmailVerificationForm'
 import { Auth0UserCard } from './components/Auth0UserCard'
+import { AdminUsersPanel } from './components/AdminUsersPanel'
 import { LoginForm } from './components/LoginForm'
 import { PasswordRecoveryForm } from './components/PasswordRecoveryForm'
 import { RegisterForm } from './components/RegisterForm'
@@ -18,6 +20,9 @@ import {
   resendEmailCode,
   resetPassword,
   verifyEmailCode,
+  changePassword,
+  updateProfilePicture,
+  updateUsername,
 } from './services/authApi'
 import type { User } from './types/user'
 import './App.css'
@@ -28,7 +33,7 @@ type ResetPasswordRouteProps = {
 
 type Auth0Session = {
   isAuthenticated: boolean
-  user: { name?: string; nickname?: string; email?: string; picture?: string } | undefined
+  user: Auth0User | undefined
   loginWithGoogle: () => Promise<void>
   loginWithGitHub: () => Promise<void>
   loginWithApple: () => Promise<void>
@@ -62,6 +67,7 @@ function App({ auth0 }: AppProps) {
   const [verificationExpiresAt, setVerificationExpiresAt] = useState<string | null>(null)
   const signedInPath = user?.email_verified_at ? '/cuenta' : '/verificar-email'
   const isAuth0Authenticated = auth0?.isAuthenticated ?? false
+  const hasAuthAlternatives = Boolean(auth0?.loginWithGoogle || auth0?.loginWithGitHub || auth0?.loginWithApple)
 
   useEffect(() => {
     getCurrentUser()
@@ -101,6 +107,10 @@ function App({ auth0 }: AppProps) {
     navigate('/', { replace: true })
   }
 
+  async function refreshCurrentUser() {
+    setUser(await getCurrentUser())
+  }
+
   if (isCheckingSession) {
     return <main className="page"><ThemeButton theme={theme} onToggle={toggleTheme} />Comprobando sesión...</main>
   }
@@ -112,7 +122,7 @@ function App({ auth0 }: AppProps) {
         <Route
           path="/"
           element={user ? <Navigate to={signedInPath} replace /> : isAuth0Authenticated ? <Navigate to="/cuenta-auth0" replace /> : (
-            <section className="auth-box">
+            <section className={`auth-box${hasAuthAlternatives ? ' auth-box--with-alternatives' : ''}`}>
               {message && <p className="message">{message}</p>}
               <LoginForm
                 onLogin={handleLogin}
@@ -128,8 +138,14 @@ function App({ auth0 }: AppProps) {
         <Route
           path="/registro"
           element={user ? <Navigate to={signedInPath} replace /> : (
-            <section className="auth-box">
-              <RegisterForm onRegister={handleRegister} onShowLogin={() => navigate('/')} />
+            <section className={`auth-box${hasAuthAlternatives ? ' auth-box--with-alternatives' : ''}`}>
+              <RegisterForm
+                onRegister={handleRegister}
+                onShowLogin={() => navigate('/')}
+                onLoginWithGoogle={auth0?.loginWithGoogle}
+                onLoginWithGitHub={auth0?.loginWithGitHub}
+                onLoginWithApple={auth0?.loginWithApple}
+              />
             </section>
           )}
         />
@@ -166,7 +182,23 @@ function App({ auth0 }: AppProps) {
           path="/cuenta-auth0"
           element={!isAuth0Authenticated ? <Navigate to="/" replace /> : <Auth0UserCard user={auth0?.user} onLogout={() => auth0?.logout()} />}
         />
-        <Route path="/cuenta" element={!user ? <Navigate to="/" replace /> : !user.email_verified_at ? <Navigate to="/verificar-email" replace /> : <UserCard user={user} onLogout={handleLogout} />} />
+        <Route
+          path="/cuenta"
+          element={!user ? <Navigate to="/" replace /> : !user.email_verified_at ? <Navigate to="/verificar-email" replace /> : (
+            <UserCard
+              user={user}
+              onLogout={handleLogout}
+              onUpdateUsername={async (username) => { const updated = await updateUsername(username); setUser(updated); return updated }}
+              onUpdateProfilePicture={async (picture) => { const updated = await updateProfilePicture(picture); setUser(updated); return updated }}
+              onChangePassword={changePassword}
+              onOpenAdmin={() => navigate('/admin')}
+            />
+          )}
+        />
+        <Route
+          path="/admin"
+          element={!user ? <Navigate to="/" replace /> : !user.email_verified_at ? <Navigate to="/verificar-email" replace /> : user.role !== 'admin' ? <Navigate to="/cuenta" replace /> : <AdminUsersPanel onBack={() => navigate('/cuenta')} onRefreshCurrentUser={refreshCurrentUser} />}
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </main>
