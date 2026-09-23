@@ -109,6 +109,10 @@ export function changePassword(currentPassword: string, password: string) {
   })
 }
 
+export function deleteOwnAccount() {
+  return request<void>('/cuenta', { method: 'DELETE' })
+}
+
 export function getAdminUsers(query = '') {
   return request<AdminUser[]>(`/admin/usuarios?q=${encodeURIComponent(query)}`)
 }

@@ -12,6 +12,7 @@ import { UserCard } from './components/UserCard'
 import { useTheme } from './hooks/useTheme'
 import {
   changePassword,
+  deleteOwnAccount,
   getCurrentUser,
   login,
   logout,
@@ -97,6 +98,13 @@ function App({ auth0 }: AppProps) {
     setUser(await getCurrentUser())
   }
 
+  async function handleDeleteOwnAccount() {
+    await deleteOwnAccount()
+    setUser(null)
+    setMessage('Tu cuenta se eliminó.')
+    setView('login')
+  }
+
   async function handleResetPassword(token: string, password: string) {
     await resetPassword(token, password)
     window.history.replaceState({}, '', '/')
@@ -147,6 +155,7 @@ function App({ auth0 }: AppProps) {
         onUpdateProfilePicture={async (picture) => { const updated = await updateProfilePicture(picture); setUser(updated); return updated }}
         onChangePassword={changePassword}
         onOpenAdmin={() => setView('admin')}
+        onDeleteAccount={handleDeleteOwnAccount}
       />
     )
   } else if (auth0?.isAuthenticated && (view === 'login' || view === 'auth0Account')) {

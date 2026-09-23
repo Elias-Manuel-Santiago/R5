@@ -277,6 +277,15 @@ app.put("/api/cuenta/foto", requerirSesion, requerirEmailVerificado, validarFoto
   res.json(usuarioPublico({ ...req.usuario, profile_picture: req.body.profilePicture }));
 });
 
+// La cuenta local se elimina por su propia sesión; las identidades de Auth0 se gestionan aparte.
+app.delete("/api/cuenta", requerirSesion, async (req, res) => {
+  const filasAfectadas = await eliminarPersona(req.usuario.id);
+  if (filasAfectadas === 0) return res.status(404).json({ error: "Usuario no encontrado" });
+
+  res.clearCookie(NOMBRE_COOKIE_SESION, opcionesCookieSesion());
+  res.sendStatus(204);
+});
+
 app.get("/api/admin/usuarios", requerirSesion, requerirEmailVerificado, requerirAdmin, async (req, res) => {
   const busqueda = typeof req.query.q === "string" ? req.query.q.trim() : "";
   if (busqueda.length > 100) return res.status(400).json({ error: "La búsqueda no puede superar 100 caracteres" });

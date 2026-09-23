@@ -11,9 +11,10 @@ type UserCardProps = {
   onUpdateProfilePicture: (profilePicture: string) => Promise<User>
   onChangePassword: (currentPassword: string, password: string) => Promise<void>
   onOpenAdmin: () => void
+  onDeleteAccount: () => Promise<void>
 }
 
-export function UserCard({ user, onLogout, onUpdateUsername, onUpdateProfilePicture, onChangePassword, onOpenAdmin }: UserCardProps) {
+export function UserCard({ user, onLogout, onUpdateUsername, onUpdateProfilePicture, onChangePassword, onOpenAdmin, onDeleteAccount }: UserCardProps) {
   const [username, setUsername] = useState(user.username)
   const [picture, setPicture] = useState<string | null>(user.profile_picture)
   const [currentPassword, setCurrentPassword] = useState('')
@@ -21,6 +22,8 @@ export function UserCard({ user, onLogout, onUpdateUsername, onUpdateProfilePict
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   function resetFeedback() {
     setMessage('')
@@ -87,6 +90,16 @@ export function UserCard({ user, onLogout, onUpdateUsername, onUpdateProfilePict
     }
   }
 
+  async function deleteAccount() {
+    try {
+      setIsDeletingAccount(true)
+      await onDeleteAccount()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudo eliminar la cuenta.')
+      setIsDeletingAccount(false)
+    }
+  }
+
   return (
     <section className="user-card account-card" aria-labelledby="welcome-title">
       <h1 id="welcome-title">Mi cuenta</h1>
@@ -124,7 +137,20 @@ export function UserCard({ user, onLogout, onUpdateUsername, onUpdateProfilePict
       <div className="account-actions">
         {user.role === 'admin' && <button type="button" className="secondary-button" onClick={onOpenAdmin}>Administrar usuarios</button>}
         <button type="button" onClick={onLogout}>Cerrar sesión</button>
+        <button type="button" className="danger-button" onClick={() => setIsDeleteDialogOpen(true)}>Eliminar mi cuenta</button>
       </div>
+      {isDeleteDialogOpen && (
+        <div className="dialog-backdrop" role="presentation">
+          <section className="dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-account-title" aria-describedby="delete-account-description">
+            <h2 id="delete-account-title">Eliminar mi cuenta</h2>
+            <p id="delete-account-description">Vas a eliminar permanentemente tu cuenta local <strong>{user.email}</strong>. Esta acción no se puede deshacer.</p>
+            <div className="dialog__actions">
+              <button type="button" className="secondary-button" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeletingAccount}>Cancelar</button>
+              <button type="button" className="danger-button" onClick={() => void deleteAccount()} disabled={isDeletingAccount}>{isDeletingAccount ? 'Eliminando…' : 'Eliminar mi cuenta'}</button>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   )
 }

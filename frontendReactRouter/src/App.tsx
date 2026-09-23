@@ -21,6 +21,7 @@ import {
   resetPassword,
   verifyEmailCode,
   changePassword,
+  deleteOwnAccount,
   updateProfilePicture,
   updateUsername,
 } from './services/authApi'
@@ -111,6 +112,13 @@ function App({ auth0 }: AppProps) {
     setUser(await getCurrentUser())
   }
 
+  async function handleDeleteOwnAccount() {
+    await deleteOwnAccount()
+    setUser(null)
+    setMessage('Tu cuenta se eliminó.')
+    navigate('/', { replace: true })
+  }
+
   if (isCheckingSession) {
     return <main className="page"><ThemeButton theme={theme} onToggle={toggleTheme} />Comprobando sesión...</main>
   }
@@ -192,6 +200,7 @@ function App({ auth0 }: AppProps) {
               onUpdateProfilePicture={async (picture) => { const updated = await updateProfilePicture(picture); setUser(updated); return updated }}
               onChangePassword={changePassword}
               onOpenAdmin={() => navigate('/admin')}
+              onDeleteAccount={handleDeleteOwnAccount}
             />
           )}
         />
