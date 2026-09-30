@@ -17,8 +17,6 @@
   box-shadow: 9px 9px 0 var(--shadow);
 }
 
-.auth-box--with-alternatives { width: min(100%, 62rem); }
-
 .auth-box h1,
 .auth-box h2,
 .user-card h1,
@@ -143,13 +141,6 @@
   gap: 1rem;
 }
 
-.auth-form--with-alternatives {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.8fr);
-  gap: clamp(1.5rem, 4vw, 3.5rem);
-  align-items: stretch;
-}
-
 .auth-form__main {
   display: grid;
   align-content: start;
@@ -157,36 +148,6 @@
 }
 
 .auth-form__main > p { margin: 0; }
-
-.auth-alternatives {
-  display: grid;
-  align-content: center;
-  gap: 1.25rem;
-  padding-left: clamp(1.5rem, 4vw, 3.5rem);
-  border-left: 2px solid var(--border);
-}
-
-.auth-alternatives__heading {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.auth-alternatives__heading span {
-  height: 2px;
-  flex: 1;
-  background: var(--border);
-}
-
-.auth-alternatives__heading p {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 900;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.auth-alternatives__options { display: grid; gap: 0.75rem; }
 
 .field {
   display: grid;
@@ -279,28 +240,6 @@ button:disabled { cursor: not-allowed; opacity: 0.6; }
   transform: none;
 }
 
-.social-login-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  color: var(--text);
-  background: var(--surface-muted);
-}
-
-.social-login-button:hover:not(:disabled) { background: var(--surface); }
-
-.social-login-button__logo {
-  width: 1.3rem;
-  height: 1.3rem;
-  object-fit: contain;
-}
-
-.social-login-button__logo--dark { display: none; }
-
-:root.dark .social-login-button__logo--light { display: none; }
-:root.dark .social-login-button__logo--dark { display: block; }
-
 .error,
 .message {
   margin: 0;
@@ -339,13 +278,6 @@ button:disabled { cursor: not-allowed; opacity: 0.6; }
 }
 
 @media (max-width: 700px) {
-  .auth-box--with-alternatives { width: min(100%, 27rem); }
-  .auth-form--with-alternatives { grid-template-columns: 1fr; }
-  .auth-alternatives {
-    padding: 1.5rem 0 0;
-    border-top: 2px solid var(--border);
-    border-left: 0;
-  }
   .account-card { grid-template-columns: 1fr; }
   .account-card > h1,
   .account-card > .profile-summary,

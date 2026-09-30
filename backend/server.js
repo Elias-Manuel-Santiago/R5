@@ -277,7 +277,7 @@ app.put("/api/cuenta/foto", requerirSesion, requerirEmailVerificado, validarFoto
   res.json(usuarioPublico({ ...req.usuario, profile_picture: req.body.profilePicture }));
 });
 
-// La cuenta local se elimina por su propia sesión; las identidades de Auth0 se gestionan aparte.
+// La cuenta se elimina mediante su propia sesión.
 app.delete("/api/cuenta", requerirSesion, async (req, res) => {
   const filasAfectadas = await eliminarPersona(req.usuario.id);
   if (filasAfectadas === 0) return res.status(404).json({ error: "Usuario no encontrado" });

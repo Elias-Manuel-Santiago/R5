@@ -1,29 +1,21 @@
 import { useState } from 'react'
-import { AuthAlternatives } from './AuthAlternatives'
 import { PasswordField } from './PasswordField'
 
 type LoginFormProps = {
   onLogin: (identifier: string, password: string) => Promise<void>
   onShowRegister: () => void
   onShowPasswordRecovery: () => void
-  onLoginWithGoogle?: () => Promise<void>
-  onLoginWithGitHub?: () => Promise<void>
-  onLoginWithApple?: () => Promise<void>
 }
 
 export function LoginForm({
   onLogin,
   onShowRegister,
   onShowPasswordRecovery,
-  onLoginWithGoogle,
-  onLoginWithGitHub,
-  onLoginWithApple,
 }: LoginFormProps) {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const hasAlternatives = Boolean(onLoginWithGoogle || onLoginWithGitHub || onLoginWithApple)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,7 +38,7 @@ export function LoginForm({
   }
 
   return (
-    <form className={`auth-form${hasAlternatives ? ' auth-form--with-alternatives' : ''}`} onSubmit={handleSubmit} noValidate>
+    <form className="auth-form" onSubmit={handleSubmit} noValidate>
       <div className="auth-form__main">
         <h1>Iniciar sesión</h1>
         <label className="field">
@@ -69,12 +61,6 @@ export function LoginForm({
           Olvidé mi contraseña
         </button>
       </div>
-      <AuthAlternatives
-        mode="login"
-        onLoginWithGoogle={onLoginWithGoogle}
-        onLoginWithGitHub={onLoginWithGitHub}
-        onLoginWithApple={onLoginWithApple}
-      />
     </form>
   )
 }

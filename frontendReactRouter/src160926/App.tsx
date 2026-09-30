@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate, useSearchParams } from 'react-router-dom'
 import { EmailVerificationForm } from './components/EmailVerificationForm'
-import { Auth0UserCard } from './components/Auth0UserCard'
 import { LoginForm } from './components/LoginForm'
 import { PasswordRecoveryForm } from './components/PasswordRecoveryForm'
 import { RegisterForm } from './components/RegisterForm'
@@ -26,18 +25,6 @@ type ResetPasswordRouteProps = {
   onReset: (token: string, password: string) => Promise<void>
 }
 
-type Auth0Session = {
-  isAuthenticated: boolean
-  user: { name?: string; nickname?: string; email?: string; picture?: string } | undefined
-  login: () => Promise<void>
-  signup: () => Promise<void>
-  logout: () => void
-}
-
-type AppProps = {
-  auth0?: Auth0Session
-}
-
 /** Obtiene el token desde la URL y muestra el formulario solo cuando existe. */
 function ResetPasswordRoute({ onReset }: ResetPasswordRouteProps) {
   const [searchParams] = useSearchParams()
@@ -52,7 +39,7 @@ function ResetPasswordRoute({ onReset }: ResetPasswordRouteProps) {
   )
 }
 
-function App({ auth0 }: AppProps) {
+function App() {
   const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
   const [user, setUser] = useState<User | null>(null)
@@ -60,7 +47,6 @@ function App({ auth0 }: AppProps) {
   const [isCheckingSession, setIsCheckingSession] = useState(true)
   const [verificationExpiresAt, setVerificationExpiresAt] = useState<string | null>(null)
   const signedInPath = user?.email_verified_at ? '/cuenta' : '/verificar-email'
-  const isAuth0Authenticated = auth0?.isAuthenticated ?? false
 
   useEffect(() => {
     getCurrentUser()
@@ -110,15 +96,13 @@ function App({ auth0 }: AppProps) {
       <Routes>
         <Route
           path="/"
-          element={user ? <Navigate to={signedInPath} replace /> : isAuth0Authenticated ? <Navigate to="/cuenta-auth0" replace /> : (
+          element={user ? <Navigate to={signedInPath} replace /> : (
             <section className="auth-box">
               {message && <p className="message">{message}</p>}
               <LoginForm
                 onLogin={handleLogin}
                 onShowRegister={() => navigate('/registro')}
                 onShowPasswordRecovery={() => navigate('/recuperar-contrasena')}
-                onLoginWithAuth0={auth0?.login}
-                onSignUpWithAuth0={auth0?.signup}
               />
             </section>
           )}
@@ -159,10 +143,6 @@ function App({ auth0 }: AppProps) {
               />
             </section>
           )}
-        />
-        <Route
-          path="/cuenta-auth0"
-          element={!isAuth0Authenticated ? <Navigate to="/" replace /> : <Auth0UserCard user={auth0?.user} onLogout={() => auth0?.logout()} />}
         />
         <Route path="/cuenta" element={!user ? <Navigate to="/" replace /> : !user.email_verified_at ? <Navigate to="/verificar-email" replace /> : <UserCard user={user} onLogout={handleLogout} />} />
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { User as Auth0User } from '@auth0/auth0-react'
 import { AdminUsersPanel } from './components/AdminUsersPanel'
-import { Auth0UserCard } from './components/Auth0UserCard'
 import { EmailVerificationForm } from './components/EmailVerificationForm'
 import { LoginForm } from './components/LoginForm'
 import { PasswordRecoveryForm } from './components/PasswordRecoveryForm'
@@ -27,27 +25,14 @@ import {
 import type { User } from './types/user'
 import './App.css'
 
-type View = 'login' | 'register' | 'passwordRecovery' | 'resetPassword' | 'emailVerification' | 'account' | 'auth0Account' | 'admin'
-
-type Auth0Session = {
-  isAuthenticated: boolean
-  user: Auth0User | undefined
-  loginWithGoogle: () => Promise<void>
-  loginWithGitHub: () => Promise<void>
-  loginWithApple: () => Promise<void>
-  logout: () => void
-}
-
-type AppProps = {
-  auth0?: Auth0Session
-}
+type View = 'login' | 'register' | 'passwordRecovery' | 'resetPassword' | 'emailVerification' | 'account' | 'admin'
 
 function getResetToken() {
   const params = new URLSearchParams(window.location.search)
   return window.location.pathname === '/restablecer-contrasena' ? params.get('token') : null
 }
 
-function App({ auth0 }: AppProps) {
+function App() {
   const { theme, toggleTheme } = useTheme()
   // Toda la navegación se resuelve con estado, sin usar React Router.
   const [view, setView] = useState<View>(() => getResetToken() ? 'resetPassword' : 'login')
@@ -56,7 +41,6 @@ function App({ auth0 }: AppProps) {
   const [message, setMessage] = useState('')
   const [isCheckingSession, setIsCheckingSession] = useState(true)
   const [verificationExpiresAt, setVerificationExpiresAt] = useState<string | null>(null)
-  const hasAuthAlternatives = Boolean(auth0?.loginWithGoogle || auth0?.loginWithGitHub || auth0?.loginWithApple)
 
   useEffect(() => {
     getCurrentUser()
@@ -158,17 +142,12 @@ function App({ auth0 }: AppProps) {
         onDeleteAccount={handleDeleteOwnAccount}
       />
     )
-  } else if (auth0?.isAuthenticated && (view === 'login' || view === 'auth0Account')) {
-    content = <Auth0UserCard user={auth0.user} onLogout={auth0.logout} />
   } else if (view === 'register') {
     content = (
-      <section className={`auth-box${hasAuthAlternatives ? ' auth-box--with-alternatives' : ''}`}>
+      <section className="auth-box">
         <RegisterForm
           onRegister={handleRegister}
           onShowLogin={() => show('login')}
-          onLoginWithGoogle={auth0?.loginWithGoogle}
-          onLoginWithGitHub={auth0?.loginWithGitHub}
-          onLoginWithApple={auth0?.loginWithApple}
         />
       </section>
     )
@@ -180,15 +159,12 @@ function App({ auth0 }: AppProps) {
     )
   } else {
     content = (
-      <section className={`auth-box${hasAuthAlternatives ? ' auth-box--with-alternatives' : ''}`}>
+      <section className="auth-box">
         {message && <p className="message">{message}</p>}
         <LoginForm
           onLogin={handleLogin}
           onShowRegister={() => show('register')}
           onShowPasswordRecovery={() => show('passwordRecovery')}
-          onLoginWithGoogle={auth0?.loginWithGoogle}
-          onLoginWithGitHub={auth0?.loginWithGitHub}
-          onLoginWithApple={auth0?.loginWithApple}
         />
       </section>
     )
